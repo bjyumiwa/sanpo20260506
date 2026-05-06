@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>元加治ゆる巡礼ポイントアプリ</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
+      background: linear-gradient(#fff1f2, #fff7ed, #ecfdf5);
+      color: #292524;
+    }
+    .wrap { max-width: 1050px; margin: 0 auto; padding: 16px; }
+    .header, .card, .point {
+      background: rgba(255,255,255,.9);
+      border-radius: 26px;
+      box-shadow: 0 8px 22px rgba(0,0,0,.08);
+    }
+    .header { padding: 22px; margin-bottom: 18px; }
+    .badge-top {
+      display: inline-block;
+      border-radius: 999px;
+      background: #ffe4e6;
+      color: #be123c;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    h1 { font-size: 32px; margin: 12px 0 8px; }
+    p { line-height: 1.7; }
+    .top {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .card { padding: 18px; }
+    .small-title { color: #78716c; font-size: 14px; font-weight: 800; }
+    .score {
+      background: #1c1917;
+      color: white;
+      border-radius: 22px;
+      padding: 18px;
+    }
+    .score-num { font-size: 44px; font-weight: 900; }
+    .bar { height: 16px; background: #e7e5e4; border-radius: 999px; overflow: hidden; margin-top: 12px; }
+    .bar-inner { height: 100%; background: #292524; border-radius: 999px; width: 0%; transition: .3s; }
+    .main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); gap: 18px; }
+    .points { display: grid; gap: 12px; }
+    .point {
+      width: 100%;
+      border: 1px solid white;
+      padding: 16px;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+    }
+    .point.done { background: #ecfdf5; border-color: #86efac; }
+    .point-row { display: flex; gap: 14px; align-items: flex-start; }
+    .num {
+      width: 46px; height: 46px; border-radius: 18px;
+      display: grid; place-items: center;
+      flex-shrink: 0; font-weight: 900;
+      background: #ffe4e6; color: #be123c;
+    }
+    .done .num { background: #059669; color: white; }
+    .point h2 { margin: 0; font-size: 19px; }
+    .subtitle { margin: 4px 0 0; color: #be123c; font-weight: 700; }
+    .pt {
+      display: inline-block;
+      border-radius: 999px;
+      background: #1c1917;
+      color: white;
+      padding: 6px 12px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+    .hint {
+      display: inline-block;
+      border-radius: 999px;
+      background: #f5f5f4;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #57534e;
+    }
+    .side { display: grid; gap: 14px; align-self: start; }
+    textarea, input {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid #ddd6d0;
+      padding: 12px;
+      box-sizing: border-box;
+      font: inherit;
+    }
+    textarea { min-height: 150px; line-height: 1.7; }
+    .reset {
+      border: 0; border-radius: 26px; background: #1c1917;
+      color: white; padding: 16px; font-weight: 800; cursor: pointer;
+    }
+    .earned {
+      border-radius: 16px; background: #fef3c7;
+      color: #78350f; padding: 12px; font-weight: 800;
+      margin-top: 8px;
+    }
+    @media (max-width: 850px) { .main { grid-template-columns: 1fr; } h1 { font-size: 26px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <span class="badge-top">✨ 元加治ゆる巡礼</span>
+      <h1>8000歩ポイント巡礼アプリ</h1>
+      <p>元加治駅から、円照寺・入間川・阿須運動公園・あけぼの子どもの森公園をめぐる記録アプリです。</p>
+    </div>
+
+    <div class="top">
+      <div class="score">
+        <div>現在のポイント</div>
+        <div class="score-num"><span id="totalPoints">0</span><span style="font-size:16px;"> pt</span></div>
+      </div>
+      <div class="card">
+        <div class="small-title">達成率</div>
+        <div class="bar"><div id="bar" class="bar-inner"></div></div>
+        <p style="font-size:24px;font-weight:800;margin:10px 0 0;"><span id="progress">0</span>%</p>
+      </div>
+      <div class="card">
+        <div class="small-title">歩いた日</div>
+        <input id="walkDate" type="date" />
+      </div>
+    </div>
+
+    <div class="main">
+      <div id="points" class="points"></div>
+
+      <div class="side">
+        <div class="card">
+          <h2>🏆 獲得バッジ</h2>
+          <div id="badges">50ptで最初のバッジが開きます。まず円照寺まで歩くと近いです。</div>
+        </div>
+
+        <div class="card">
+          <h2>📝 今日のひとことメモ</h2>
+          <textarea id="memo" placeholder="例：坂道で息が上がった。でも帰りは気持ちよかった。"></textarea>
+        </div>
+
+        <div class="card">
+          <h2>安全メモ</h2>
+          <p>実際に歩くときは、Googleマップなどで現在地と安全な歩道を確認してください。体調が悪い日は、阿須運動公園で折り返しても十分です。</p>
+        </div>
+
+        <button class="reset" id="reset">記録をリセット</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ROUTE_POINTS = [
+      { id: "motokaji", title: "元加治駅", subtitle: "出発の一礼", description: "今日のゆる巡礼を始めます。体重ではなく、まず一歩を記録します。", points: 10, stepHint: "0歩" },
+      { id: "enshoji", title: "円照寺", subtitle: "御朱印・七福神ポイント", description: "札所めぐり感を高める最初の目的地。静かに深呼吸してから進みます。", points: 30, stepHint: "約700〜1000歩" },
+      { id: "irumagawa", title: "入間川沿い", subtitle: "水辺のクールダウン", description: "川沿いを歩きながら、呼吸と歩幅を整えます。", points: 25, stepHint: "約2000歩" },
+      { id: "asupark", title: "阿須運動公園", subtitle: "歩数を稼ぐ区間", description: "ここで少し遠回りすると8000歩に近づきます。無理なくリズムよく。", points: 35, stepHint: "約3500歩" },
+      { id: "akebono", title: "あけぼの子どもの森公園", subtitle: "森の坂道ポイント", description: "少し坂道。息が上がりすぎない速さで、ダイエット向けの山場です。", points: 45, stepHint: "約5000歩" },
+      { id: "hill", title: "加治丘陵ミニ坂道", subtitle: "脂肪燃焼チャレンジ", description: "坂道はゆっくりでOK。歩き切ったことに価値があります。", points: 50, stepHint: "約6200歩" },
+      { id: "kasumigawa", title: "霞川方面", subtitle: "静かな道で振り返り", description: "今日の気づきを一つだけメモします。研究メモでも、身体メモでもOK。", points: 30, stepHint: "約7200歩" },
+      { id: "goal", title: "元加治駅へ戻る", subtitle: "8000歩達成チェック", description: "ゴールです。歩いた自分に小さく拍手。次回につながる記録を残します。", points: 60, stepHint: "約8000〜10000歩" }
+    ];
+
+    const BADGES = [
+      { threshold: 50, label: "巡礼はじめ" },
+      { threshold: 100, label: "水辺の歩き人" },
+      { threshold: 180, label: "坂道チャレンジャー" },
+      { threshold: 250, label: "元加治ゆる巡礼マスター" }
+    ];
+
+    let state = JSON.parse(localStorage.getItem("motokajiPilgrimageState") || "{}");
+    state.checked = state.checked || {};
+    state.memo = state.memo || "";
+    state.walkDate = state.walkDate || new Date().toISOString().slice(0,10);
+
+    const pointsEl = document.getElementById("points");
+    const totalEl = document.getElementById("totalPoints");
+    const progressEl = document.getElementById("progress");
+    const barEl = document.getElementById("bar");
+    const badgesEl = document.getElementById("badges");
+    const memoEl = document.getElementById("memo");
+    const dateEl = document.getElementById("walkDate");
+
+    memoEl.value = state.memo;
+    dateEl.value = state.walkDate;
+
+    function save() {
+      state.memo = memoEl.value;
+      state.walkDate = dateEl.value;
+      localStorage.setItem("motokajiPilgrimageState", JSON.stringify(state));
+    }
+
+    function render() {
+      pointsEl.innerHTML = "";
+      let total = 0;
+      let count = 0;
+
+      ROUTE_POINTS.forEach((item, index) => {
+        const done = !!state.checked[item.id];
+        if (done) { total += item.points; count++; }
+
+        const btn = document.createElement("button");
+        btn.className = "point" + (done ? " done" : "");
+        btn.innerHTML = `
+          <div class="point-row">
+            <div class="num">${done ? "✓" : index + 1}</div>
+            <div>
+              <h2>${item.title}</h2>
+              <div class="subtitle">${item.subtitle}</div>
+              <p>${item.description}</p>
+              <span class="hint">${item.stepHint}</span>
+              <br><span class="pt">+${item.points}pt</span>
+            </div>
+          </div>
+        `;
+        btn.onclick = () => {
+          state.checked[item.id] = !state.checked[item.id];
+          save();
+          render();
+        };
+        pointsEl.appendChild(btn);
+      });
+
+      const progress = Math.round((count / ROUTE_POINTS.length) * 100);
+      totalEl.textContent = total;
+      progressEl.textContent = progress;
+      barEl.style.width = progress + "%";
+
+      const earned = BADGES.filter(b => total >= b.threshold);
+      if (earned.length === 0) {
+        badgesEl.textContent = "50ptで最初のバッジが開きます。まず円照寺まで歩くと近いです。";
+      } else {
+        badgesEl.innerHTML = earned.map(b => `<div class="earned">${b.label}</div>`).join("");
+      }
+    }
+
+    memoEl.addEventListener("input", save);
+    dateEl.addEventListener("change", save);
+
+    document.getElementById("reset").onclick = () => {
+      state = { checked: {}, memo: "", walkDate: new Date().toISOString().slice(0,10) };
+      memoEl.value = "";
+      dateEl.value = state.walkDate;
+      save();
+      render();
+    };
+
+    render();
+  </script>
+</body>
+</html>
